@@ -304,26 +304,35 @@
             }
             
             if (!fileIsSymbolicLink) {
-                FILE *fp = fopen((const char*)[fullPath UTF8String], "wb");
-                while (fp) {
+                NSFileManager *fm = [NSFileManager defaultManager];
+                NSMutableData *data = [NSMutableData data];
+
+                while (true) {
                     int readBytes = unzReadCurrentFile(zip, buffer, 4096);
                     
                     if (readBytes > 0) {
-                        fwrite(buffer, readBytes, 1, fp );
+                        [data appendBytes:buffer length:readBytes];
                     } else {
                         break;
                     }
                 }
                 
-                if (fp) {
+                [fm createFileAtPath:fullPath contents:data attributes:nil];
+                
+                /*if (![fm fileExistsAtPath: fullPath]) {
+                    NSLog(@"File is NOT actually created.");
+                }
+                else{
+                    NSLog(@"File is actually created.");
+                }*/
+                
+                if (true) {
                     if ([[[fullPath pathExtension] lowercaseString] isEqualToString:@"zip"]) {
                         NSLog(@"Unzipping nested .zip file:  %@", [fullPath lastPathComponent]);
                         if ([self unzipFileAtPath:fullPath toDestination:[fullPath stringByDeletingLastPathComponent] overwrite:overwrite password:password error:nil delegate:nil ]) {
                             [[NSFileManager defaultManager] removeItemAtPath:fullPath error:nil];
                         }
                     }
-                    
-                    fclose(fp);
                     
                     if (preserveAttributes) {
                         
